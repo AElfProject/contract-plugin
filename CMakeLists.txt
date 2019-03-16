@@ -6,32 +6,17 @@ set(PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
 project(${PACKAGE_NAME} C CXX)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/opt/bin)
 
 # Providers for third-party dependencies (gRPC_*_PROVIDER properties):
 # "module": build the dependency using sources from git submodule (under third_party)
 # "package": use cmake's find_package functionality to locate a pre-installed dependency
-
-set(gRPC_ZLIB_PROVIDER "module" CACHE STRING "Provider of zlib library")
-set_property(CACHE gRPC_ZLIB_PROVIDER PROPERTY STRINGS "module" "package")
-
-set(gRPC_CARES_PROVIDER "module" CACHE STRING "Provider of c-ares library")
-set_property(CACHE gRPC_CARES_PROVIDER PROPERTY STRINGS "module" "package")
-
-set(gRPC_SSL_PROVIDER "module" CACHE STRING "Provider of ssl library")
-set_property(CACHE gRPC_SSL_PROVIDER PROPERTY STRINGS "module" "package")
 
 set(gRPC_PROTOBUF_PROVIDER "module" CACHE STRING "Provider of protobuf library")
 set_property(CACHE gRPC_PROTOBUF_PROVIDER PROPERTY STRINGS "module" "package")
 
 set(gRPC_PROTOBUF_PACKAGE_TYPE "" CACHE STRING "Algorithm for searching protobuf package")
 set_property(CACHE gRPC_PROTOBUF_PACKAGE_TYPE PROPERTY STRINGS "CONFIG" "MODULE")
-
-set(gRPC_GFLAGS_PROVIDER "module" CACHE STRING "Provider of gflags library")
-set_property(CACHE gRPC_GFLAGS_PROVIDER PROPERTY STRINGS "module" "package")
-
-set(gRPC_BENCHMARK_PROVIDER "module" CACHE STRING "Provider of benchmark library")
-set_property(CACHE gRPC_BENCHMARK_PROVIDER PROPERTY STRINGS "module" "package")
 
 set(gRPC_USE_PROTO_LITE OFF CACHE BOOL "Use the protobuf-lite library")
 
@@ -74,14 +59,6 @@ else()
     set(_gRPC_PROTOBUF_LIBRARY_NAME "libprotobuf")
 endif()
 
-#if(gRPC_BACKWARDS_COMPATIBILITY_MODE)
-#    add_definitions(-DGPR_BACKWARDS_COMPATIBILITY_MODE)
-#    if (_gRPC_PLATFORM_MAC)
-#        # some C++11 constructs not supported before OS X 10.9
-#        set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9)
-#    endif()
-#endif()
-
 if (_gRPC_PLATFORM_LINUX OR _gRPC_PLATFORM_MAC)
     # C core has C++ source code, but should not depend on libstc++ (for better portability).
     # We need to use a few tricks to convince cmake to do that.
@@ -118,17 +95,7 @@ add_executable(grpc_contract_csharp_plugin
 
 target_include_directories(grpc_contract_csharp_plugin
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-        PRIVATE ${_gRPC_SSL_INCLUDE_DIR}
         PRIVATE ${_gRPC_PROTOBUF_INCLUDE_DIR}
-        PRIVATE ${_gRPC_ZLIB_INCLUDE_DIR}
-        PRIVATE ${_gRPC_BENCHMARK_INCLUDE_DIR}
-        PRIVATE ${_gRPC_CARES_INCLUDE_DIR}
-        PRIVATE ${_gRPC_GFLAGS_INCLUDE_DIR}
-        PRIVATE ${_gRPC_ADDRESS_SORTING_INCLUDE_DIR}
-        PRIVATE ${_gRPC_NANOPB_INCLUDE_DIR}
-        PRIVATE ${_gRPC_PROTO_GENS_DIR}
         )
 
 target_link_libraries(grpc_contract_csharp_plugin
