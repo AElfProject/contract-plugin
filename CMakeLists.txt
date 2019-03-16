@@ -86,19 +86,19 @@ elseif(UNIX)
 endif()
 
 
-add_executable(grpc_contract_csharp_plugin
+add_executable(contract_csharp_plugin
         src/aelf_options.pb.cc
         src/contract_csharp_generator.cc
         src/contract_csharp_plugin.cc
         )
 
 
-target_include_directories(grpc_contract_csharp_plugin
+target_include_directories(contract_csharp_plugin
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
         PRIVATE ${_gRPC_PROTOBUF_INCLUDE_DIR}
         )
 
-target_link_libraries(grpc_contract_csharp_plugin
+target_link_libraries(contract_csharp_plugin
         ${_gRPC_PROTOBUF_PROTOC_LIBRARIES}
         ${_gRPC_PROTOBUF_LIBRARIES}
         ${_gRPC_ALLTARGETS_LIBRARIES}
