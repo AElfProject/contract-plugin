@@ -287,12 +287,6 @@ void GenerateServerClass(Printer* out, const ServiceDescriptor* service) {
 
 void GenerateBindServiceMethod(Printer* out, const ServiceDescriptor* service) {
   out->Print(
-      "/// <summary>Creates service definition that can be registered with a "
-      "server</summary>\n");
-  out->Print(
-      "/// <param name=\"serviceImpl\">An object implementing the server-side"
-      " handling logic.</param>\n");
-  out->Print(
       "public static aelf::ServerServiceDefinition BindService($implclass$ "
       "serviceImpl)\n",
       "implclass", GetServerClassName(service));
