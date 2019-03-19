@@ -150,7 +150,7 @@ std::string GetMethodRequestParamServer(const MethodDescriptor* method) {
   switch (GetMethodType(method)) {
     case METHODTYPE_NO_STREAMING:
     case METHODTYPE_SERVER_STREAMING:
-      return GetClassName(method->input_type()) + " request";
+      return GetClassName(method->input_type()) + " input";
     case METHODTYPE_CLIENT_STREAMING:
     case METHODTYPE_BIDI_STREAMING:
       return "grpc::IAsyncStreamReader<" + GetClassName(method->input_type()) +
