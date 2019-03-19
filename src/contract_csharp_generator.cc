@@ -108,26 +108,6 @@ bool GenerateDocCommentBody(grpc::protobuf::io::Printer* printer,
   return GenerateDocCommentBodyImpl(printer, location);
 }
 
-void GenerateDocCommentServerMethod(grpc::protobuf::io::Printer* printer,
-                                    const MethodDescriptor* method) {
-  if (GenerateDocCommentBody(printer, method)) {
-    if (method->client_streaming()) {
-      // TODO: streaming not supported, throw exception
-    } else {
-      printer->Print(
-          "/// <param name=\"request\">The request received from the "
-          "client.</param>\n");
-    }
-    if (method->server_streaming()) {
-      // TODO: streaming not supported, throw exception
-    } else {
-      printer->Print(
-          "/// <returns>The response to send back to the client (wrapped by a "
-          "task).</returns>\n");
-    }
-  }
-}
-
 std::string GetServiceContainerClassName(const ServiceDescriptor* service) {
   return service->name()+"Container";
 }
@@ -286,7 +266,6 @@ void GenerateServerClass(Printer* out, const ServiceDescriptor* service) {
   out->Indent();
   for (int i = 0; i < service->method_count(); i++) {
     const MethodDescriptor* method = service->method(i);
-    GenerateDocCommentServerMethod(out, method);
     out->Print(
         "public virtual $returntype$ "
         "$methodname$($request$$response_stream_maybe$)\n",
