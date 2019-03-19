@@ -48,13 +48,13 @@ void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\022aelf_options.proto\022\004aelf\032 google/proto"
-      "buf/descriptor.proto:5\n\nstate_type\022\037.goo"
-      "gle.protobuf.ServiceOptions\030\305\304\016 \001(\t:1\n\007i"
-      "s_view\022\036.google.protobuf.MethodOptions\030\353"
-      "\366\024 \001(\010"
+      "buf/descriptor.proto:7\n\014csharp_state\022\037.g"
+      "oogle.protobuf.ServiceOptions\030\305\304\016 \001(\t:1\n"
+      "\007is_view\022\036.google.protobuf.MethodOptions"
+      "\030\353\366\024 \001(\010"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 166);
+      descriptor, 168);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "aelf_options.proto", &protobuf_RegisterTypes);
   ::protobuf_google_2fprotobuf_2fdescriptor_2eproto::AddDescriptors();
@@ -72,10 +72,10 @@ struct StaticDescriptorInitializer {
 } static_descriptor_initializer;
 }  // namespace protobuf_aelf_5foptions_2eproto
 namespace aelf {
-const ::std::string state_type_default("");
+const ::std::string csharp_state_default("");
 ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::ServiceOptions,
     ::google::protobuf::internal::StringTypeTraits, 9, false >
-  state_type(kStateTypeFieldNumber, state_type_default);
+  csharp_state(kCsharpStateFieldNumber, csharp_state_default);
 ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MethodOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
   is_view(kIsViewFieldNumber, false);

@@ -131,7 +131,7 @@ std::string GetCSharpMethodType(const MethodDescriptor* method) {
   return "aelf::MethodType.Action";
 }
 std::string GetServiceNameFieldName() { return "__ServiceName"; }
-std::string GetStateTypeName(const ServiceDescriptor* service) { return service->options().GetExtension(aelf::state_type); }
+std::string GetStateTypeName(const ServiceDescriptor* service) { return service->options().GetExtension(aelf::csharp_state); }
 
 std::string GetMarshallerFieldName(const Descriptor* message) {
   return "__Marshaller_" +

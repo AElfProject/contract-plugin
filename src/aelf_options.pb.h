@@ -53,10 +53,10 @@ namespace aelf {
 
 // ===================================================================
 
-static const int kStateTypeFieldNumber = 238149;
+static const int kCsharpStateFieldNumber = 238149;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::ServiceOptions,
     ::google::protobuf::internal::StringTypeTraits, 9, false >
-  state_type;
+  csharp_state;
 static const int kIsViewFieldNumber = 342891;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MethodOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
