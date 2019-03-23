@@ -124,6 +124,10 @@ std::string GetTesterClassName(const ServiceDescriptor* service) {
   return service->name()+"Tester";
 }
 
+std::string GetReferenceClassName(const ServiceDescriptor* service) {
+  return service->name()+"ReferenceState";
+}
+
 bool IsViewOnlyMethod(const MethodDescriptor* method) {
   return method->options().GetExtension(aelf::is_view);
 }
@@ -356,6 +360,29 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
   out->Print("}\n");
 }
 
+
+  void GenerateReferenceClass(Printer* out, const ServiceDescriptor* service, bool internal_access) {
+
+    // TODO: Maybe provide ContractReferenceState in options
+    out->Print("public class $classname$ : global::AElf.Sdk.CSharp.State.ContractReferenceState\n",
+               "classname", GetReferenceClassName(service));
+    out->Print("{\n");
+    {
+      out->Indent();
+      for (int i = 0; i < service->method_count(); i++) {
+        const MethodDescriptor* method = service->method(i);
+        out->Print("$access_level$ global::AElf.Sdk.CSharp.State.MethodReference<$request$, $response$> $fieldname$ { get; set; }\n",
+                   "access_level", GetAccessLevel(internal_access),
+                   "fieldname", method->name(),
+                   "request", GetClassName(method->input_type()),
+                   "response", GetClassName(method->output_type()));
+      }
+      out->Outdent();
+    }
+
+    out->Print("}\n");
+  }
+
 void GenerateService(Printer* out, const ServiceDescriptor* service,
                      bool generate_tester, bool generate_reference,
                      bool internal_access) {
@@ -386,6 +413,10 @@ void GenerateService(Printer* out, const ServiceDescriptor* service,
 
   if(generate_tester) {
     GenerateTesterClass(out, service);
+  }
+
+  if(generate_reference){
+    GenerateReferenceClass(out, service, internal_access);
   }
   out->Outdent();
   out->Print("}\n");
