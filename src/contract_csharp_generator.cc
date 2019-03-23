@@ -120,6 +120,10 @@ std::string GetServerClassName(const ServiceDescriptor* service) {
   return service->name() + "Base";
 }
 
+std::string GetTesterClassName(const ServiceDescriptor* service) {
+  return service->name()+"Tester";
+}
+
 bool IsViewOnlyMethod(const MethodDescriptor* method) {
   return method->options().GetExtension(aelf::is_view);
 }
@@ -199,6 +203,7 @@ std::vector<const Descriptor*> GetUsedMessages(
 }
 
 void GenerateMarshallerFields(Printer* out, const ServiceDescriptor* service) {
+  out->Print("#region Marshallers\n");
   std::vector<const Descriptor*> used_messages = GetUsedMessages(service);
   for (size_t i = 0; i < used_messages.size(); i++) {
     const Descriptor* message = used_messages[i];
@@ -210,6 +215,7 @@ void GenerateMarshallerFields(Printer* out, const ServiceDescriptor* service) {
         "fieldname", GetMarshallerFieldName(message), "type",
         GetClassName(message));
   }
+  out->Print("#endregion\n");
   out->Print("\n");
 }
 
@@ -311,8 +317,47 @@ void GenerateBindServiceMethod(Printer* out, const ServiceDescriptor* service) {
   out->Print("\n");
 }
 
+void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
+  out->Print("public class $testername$\n",
+             "testername", GetTesterClassName(service));
+  out->Print("{\n");
+  {
+    out->Indent();
+    out->Print("private readonly aelf::ITestMethodFactory _factory;\n");
+    out->Print("public $testername$(aelf::ITestMethodFactory factory)\n",
+               "testername", GetTesterClassName(service));
+    out->Print("{\n");
+    {
+      out->Indent();
+      out->Print("_factory = factory;\n");
+      out->Outdent();
+    }
+    out->Print("}\n");
+    out->Print("\n");
+    for (int i = 0; i < service->method_count(); i++) {
+      const MethodDescriptor* method = service->method(i);
+      out->Print(
+          "public aelf::TestMethod<$request$, $response$> $fieldname$\n",
+          "fieldname", method->name(),
+          "request", GetClassName(method->input_type()),
+          "response", GetClassName(method->output_type()));
+      out->Print("{\n");
+      {
+        out->Indent();
+        out->Print("get { return _factory.Create($fieldname$); }\n",
+                   "fieldname", GetMethodFieldName(method));
+        out->Outdent();
+      }
+      out->Print("}\n\n");
+    }
+    out->Outdent();
+  }
+
+  out->Print("}\n");
+}
+
 void GenerateService(Printer* out, const ServiceDescriptor* service,
-                     bool generate_client, bool generate_server,
+                     bool generate_tester, bool generate_reference,
                      bool internal_access) {
   GenerateDocCommentBody(out, service);
   out->Print("$access_level$ static partial class $containername$\n",
@@ -326,18 +371,22 @@ void GenerateService(Printer* out, const ServiceDescriptor* service,
   out->Print("\n");
 
   GenerateMarshallerFields(out, service);
+  out->Print("#region Methods\n");
   for (int i = 0; i < service->method_count(); i++) {
     GenerateStaticMethodField(out, service->method(i));
   }
+  out->Print("#endregion\n");
+  out->Print("\n");
   GenerateServiceDescriptorProperty(out, service);
 
-  if (generate_server) {
+  if (!generate_tester && !generate_reference) {
     GenerateServerClass(out, service);
-  }
-  if (generate_server) {
     GenerateBindServiceMethod(out, service);
   }
 
+  if(generate_tester) {
+    GenerateTesterClass(out, service);
+  }
   out->Outdent();
   out->Print("}\n");
 }

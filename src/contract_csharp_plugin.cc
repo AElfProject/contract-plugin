@@ -36,14 +36,14 @@ public:
       std::vector<std::pair<grpc::string, grpc::string> > options;
       grpc::protobuf::compiler::ParseGeneratorParameter(parameter, &options);
 
-      bool generate_client = true;
-      bool generate_server = true;
+      bool generate_tester = false;
+      bool generate_reference = false;
       bool internal_access = false;
       for (size_t i = 0; i < options.size(); i++) {
-        if (options[i].first == "no_client") {
-          generate_client = false;
-        } else if (options[i].first == "no_server") {
-          generate_server = false;
+        if (options[i].first == "tester") {
+          generate_tester = true;
+        } else if (options[i].first == "reference") {
+          generate_reference = true;
         } else if (options[i].first == "internal_access") {
           internal_access = true;
         } else {
@@ -53,7 +53,7 @@ public:
       }
 
       grpc::string code = grpc_contract_csharp_generator::GetServices(
-              file, generate_client, generate_server, internal_access);
+              file, generate_tester, generate_reference, internal_access);
       if (code.size() == 0) {
         return true;  // don't generate a file if there are no services
       }
