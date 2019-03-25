@@ -322,22 +322,11 @@ void GenerateBindServiceMethod(Printer* out, const ServiceDescriptor* service) {
 }
 
 void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
-  out->Print("public class $testername$\n",
+  out->Print("public class $testername$ : aelf::ContractTesterBase\n",
              "testername", GetTesterClassName(service));
   out->Print("{\n");
   {
     out->Indent();
-    out->Print("private readonly aelf::ITestMethodFactory _factory;\n");
-    out->Print("public $testername$(aelf::ITestMethodFactory factory)\n",
-               "testername", GetTesterClassName(service));
-    out->Print("{\n");
-    {
-      out->Indent();
-      out->Print("_factory = factory;\n");
-      out->Outdent();
-    }
-    out->Print("}\n");
-    out->Print("\n");
     for (int i = 0; i < service->method_count(); i++) {
       const MethodDescriptor* method = service->method(i);
       out->Print(
@@ -348,7 +337,7 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
       out->Print("{\n");
       {
         out->Indent();
-        out->Print("get { return _factory.Create($fieldname$); }\n",
+        out->Print("get { return __factory.Create($fieldname$); }\n",
                    "fieldname", GetMethodFieldName(method));
         out->Outdent();
       }
