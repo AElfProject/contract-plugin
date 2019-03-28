@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <google/protobuf/compiler/csharp/csharp_names.h>
+#include <google/protobuf/compiler/csharp/csharp_helpers.h>
 
 namespace grpc_contract_csharp_generator {
 

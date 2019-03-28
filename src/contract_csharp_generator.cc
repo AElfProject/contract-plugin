@@ -28,10 +28,12 @@
 using google::protobuf::compiler::csharp::GetClassName;
 using google::protobuf::compiler::csharp::GetFileNamespace;
 using google::protobuf::compiler::csharp::GetReflectionClassName;
+using google::protobuf::compiler::csharp::GetPropertyName;
 using grpc::protobuf::Descriptor;
 using grpc::protobuf::FileDescriptor;
 using grpc::protobuf::MethodDescriptor;
 using grpc::protobuf::ServiceDescriptor;
+using grpc::protobuf::FieldDescriptor;
 using grpc::protobuf::io::Printer;
 using grpc::protobuf::io::StringOutputStream;
 using grpc_generator::GetMethodType;
@@ -126,6 +128,14 @@ std::string GetTesterClassName(const ServiceDescriptor* service) {
 
 std::string GetReferenceClassName(const ServiceDescriptor* service) {
   return service->name()+"ReferenceState";
+}
+
+bool IsEventMessageType(const Descriptor* message){
+  return message->options().GetExtension(aelf::is_event);
+}
+
+bool IsIndexedField(const FieldDescriptor* field){
+  return field->options().GetExtension(aelf::is_indexed);
 }
 
 bool IsViewOnlyMethod(const MethodDescriptor* method) {
@@ -372,6 +382,66 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
     out->Print("}\n");
   }
 
+void GenerateEvent(Printer* out, const Descriptor* message, bool internal_access){
+  if(!IsEventMessageType(message)){
+    return;
+  }
+  out->Print("$access_level$ partial class $classname$ : aelf::IEvent<$classname$>\n",
+             "access_level", GetAccessLevel(internal_access),
+             "classname", message->name());
+  out->Print("{\n");
+  {
+    out->Indent();
+    // GetIndexed
+    out->Print("public global::System.Collections.Generic.IEnumerable<$classname$> GetIndexed()\n",
+               "classname", message->name());
+    out->Print("{\n");
+    {
+      out->Indent();
+      for(int i = 0; i < message->field_count(); i++){
+        const FieldDescriptor* field = message->field(i);
+        if(IsIndexedField(field)){
+          out->Print("yield return new $classname$\n", "classname", message->name());
+          out->Print("{\n");
+          {
+            out->Indent();
+            out->Print("$propertyname$ = $propertyname$\n", "propertyname", GetPropertyName(field));
+            out->Outdent();
+          }
+          out->Print("};\n");
+        }
+      }
+      out->Outdent();
+    }
+    out->Print("}\n\n");
+
+    // GetNonIndexed
+    out->Print("public $classname$ GetNonIndexed()\n", "classname", message->name());
+    out->Print("{\n");
+    {
+      out->Indent();
+      out->Print("return new $classname$\n", "classname", message->name());
+      out->Print("{\n");
+      {
+        out->Indent();
+        for(int i = 0; i < message->field_count(); i++){
+          const FieldDescriptor* field = message->field(i);
+          if(!IsIndexedField(field)){
+            out->Print("$propertyname$ = $propertyname$,\n", "propertyname", GetPropertyName(field));
+          }
+        }
+        out->Outdent();
+      }
+      out->Print("};\n");
+      out->Outdent();
+    }
+    out->Print("}\n");
+    out->Outdent();
+  }
+
+  out->Print("}\n\n");
+}
+
 void GenerateService(Printer* out, const ServiceDescriptor* service,
                      bool generate_tester, bool generate_reference,
                      bool internal_access) {
@@ -417,7 +487,6 @@ grpc::string GetServices(const FileDescriptor* file, bool generate_client,
                          bool generate_server, bool internal_access) {
   grpc::string output;
   {
-    // return file->DebugString();
     // Scope the output stream so it closes and finalizes output to the string.
 
     StringOutputStream output_stream(&output);
@@ -455,6 +524,15 @@ grpc::string GetServices(const FileDescriptor* file, bool generate_client,
       out.Print("namespace $namespace$ {\n", "namespace", file_namespace);
       out.Indent();
     }
+
+    out.Print("\n");
+    out.Print("#region Events\n");
+    for(int i = 0; i < file->message_type_count(); i++){
+      const Descriptor* message = file->message_type(i);
+      GenerateEvent(&out, message, internal_access);
+    }
+    out.Print("#endregion\n");
+
     for (int i = 0; i < file->service_count(); i++) {
       GenerateService(&out, file->service(i), generate_client, generate_server,
                       internal_access);
@@ -464,6 +542,7 @@ grpc::string GetServices(const FileDescriptor* file, bool generate_client,
       out.Print("}\n");
     }
     out.Print("#endregion\n");
+    out.Print("\n");
   }
   return output;
 }

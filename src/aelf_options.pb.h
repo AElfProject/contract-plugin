@@ -61,6 +61,14 @@ static const int kIsViewFieldNumber = 342891;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MethodOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
   is_view;
+static const int kIsEventFieldNumber = 839427;
+extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MessageOptions,
+    ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
+  is_event;
+static const int kIsIndexedFieldNumber = 543129;
+extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::FieldOptions,
+    ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
+  is_indexed;
 
 // ===================================================================
 

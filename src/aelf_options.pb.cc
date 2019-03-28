@@ -51,10 +51,12 @@ void AddDescriptorsImpl() {
       "buf/descriptor.proto:7\n\014csharp_state\022\037.g"
       "oogle.protobuf.ServiceOptions\030\305\304\016 \001(\t:1\n"
       "\007is_view\022\036.google.protobuf.MethodOptions"
-      "\030\353\366\024 \001(\010"
+      "\030\353\366\024 \001(\010:3\n\010is_event\022\037.google.protobuf.M"
+      "essageOptions\030\203\2363 \001(\010:3\n\nis_indexed\022\035.go"
+      "ogle.protobuf.FieldOptions\030\231\223! \001(\010"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 168);
+      descriptor, 274);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "aelf_options.proto", &protobuf_RegisterTypes);
   ::protobuf_google_2fprotobuf_2fdescriptor_2eproto::AddDescriptors();
@@ -79,6 +81,12 @@ const ::std::string csharp_state_default("");
 ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MethodOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
   is_view(kIsViewFieldNumber, false);
+::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MessageOptions,
+    ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
+  is_event(kIsEventFieldNumber, false);
+::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::FieldOptions,
+    ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
+  is_indexed(kIsIndexedFieldNumber, false);
 
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace aelf
