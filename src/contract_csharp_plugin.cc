@@ -36,24 +36,30 @@ public:
       std::vector<std::pair<grpc::string, grpc::string> > options;
       grpc::protobuf::compiler::ParseGeneratorParameter(parameter, &options);
 
-      bool generate_tester = false;
-      bool generate_reference = false;
-      bool internal_access = false;
+      // default generate contract with event
+      char flags = grpc_contract_csharp_generator::GENERATE_CONTRACT_WITH_EVENT;
+
       for (size_t i = 0; i < options.size(); i++) {
         if (options[i].first == "tester") {
-          generate_tester = true;
+          flags |= grpc_contract_csharp_generator::GENERATE_TESTER_WITH_EVENT;
+          flags &= ~grpc_contract_csharp_generator::GENERATE_CONTRACT;
         } else if (options[i].first == "reference") {
-          generate_reference = true;
+          // reference doesn't require event
+          flags |= grpc_contract_csharp_generator::GENERATE_REFERENCE;
+          flags &= ~grpc_contract_csharp_generator::GENERATE_CONTRACT;
+        } else if (options[i].first == "nocontract") {
+          flags &= ~grpc_contract_csharp_generator::GENERATE_CONTRACT;
+        } else if (options[i].first == "noevent") {
+          flags &= ~grpc_contract_csharp_generator::GENERATE_EVENT;
         } else if (options[i].first == "internal_access") {
-          internal_access = true;
+          flags |= grpc_contract_csharp_generator::INTERNAL_ACCESS;
         } else {
           *error = "Unknown generator option: " + options[i].first;
           return false;
         }
       }
 
-      grpc::string code = grpc_contract_csharp_generator::GetServices(
-              file, generate_tester, generate_reference, internal_access);
+      grpc::string code = grpc_contract_csharp_generator::GetServices(file, flags);
       if (code.size() == 0) {
         return true;  // don't generate a file if there are no services
       }

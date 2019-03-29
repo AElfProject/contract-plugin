@@ -160,8 +160,28 @@ std::string GetMethodFieldName(const MethodDescriptor* method) {
   return "__Method_" + method->name();
 }
 
-std::string GetAccessLevel(bool internal_access) {
-  return internal_access ? "internal" : "public";
+std::string GetAccessLevel(char flags) {
+  return flags & INTERNAL_ACCESS ? "internal" : "public";
+}
+
+bool NeedEvent(char flags) {
+  return flags & GENERATE_EVENT;
+}
+
+bool NeedContract(char flags) {
+  return flags & GENERATE_CONTRACT;
+}
+
+bool NeedTester(char flags) {
+  return flags & GENERATE_TESTER;
+}
+
+bool NeedReference(char flags) {
+  return flags & GENERATE_REFERENCE;
+}
+
+bool NeedContainer(char flags){
+  return NeedContract(flags) | NeedTester(flags) | NeedReference(flags);
 }
 
 std::string GetMethodRequestParamServer(const MethodDescriptor* method) {
@@ -272,7 +292,7 @@ void GenerateServiceDescriptorProperty(Printer* out,
   out->Print("\n");
 }
 
-void GenerateServerClass(Printer* out, const ServiceDescriptor* service) {
+void GenerateContractBaseClass(Printer *out, const ServiceDescriptor *service) {
   
   out->Print(
       "/// <summary>Base class for the contract of "
@@ -360,7 +380,7 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
 }
 
 
-  void GenerateReferenceClass(Printer* out, const ServiceDescriptor* service, bool internal_access) {
+  void GenerateReferenceClass(Printer* out, const ServiceDescriptor* service, char flags) {
 
     // TODO: Maybe provide ContractReferenceState in options
     out->Print("public class $classname$ : global::AElf.Sdk.CSharp.State.ContractReferenceState\n",
@@ -371,7 +391,7 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
       for (int i = 0; i < service->method_count(); i++) {
         const MethodDescriptor* method = service->method(i);
         out->Print("$access_level$ global::AElf.Sdk.CSharp.State.MethodReference<$request$, $response$> $fieldname$ { get; set; }\n",
-                   "access_level", GetAccessLevel(internal_access),
+                   "access_level", GetAccessLevel(flags),
                    "fieldname", method->name(),
                    "request", GetClassName(method->input_type()),
                    "response", GetClassName(method->output_type()));
@@ -382,12 +402,12 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
     out->Print("}\n");
   }
 
-void GenerateEvent(Printer* out, const Descriptor* message, bool internal_access){
+void GenerateEvent(Printer* out, const Descriptor* message, char flags){
   if(!IsEventMessageType(message)){
     return;
   }
   out->Print("$access_level$ partial class $classname$ : aelf::IEvent<$classname$>\n",
-             "access_level", GetAccessLevel(internal_access),
+             "access_level", GetAccessLevel(flags),
              "classname", message->name());
   out->Print("{\n");
   {
@@ -411,6 +431,7 @@ void GenerateEvent(Printer* out, const Descriptor* message, bool internal_access
           out->Print("};\n");
         }
       }
+      out->Print("yield break;\n");
       out->Outdent();
     }
     out->Print("}\n\n");
@@ -442,12 +463,10 @@ void GenerateEvent(Printer* out, const Descriptor* message, bool internal_access
   out->Print("}\n\n");
 }
 
-void GenerateService(Printer* out, const ServiceDescriptor* service,
-                     bool generate_tester, bool generate_reference,
-                     bool internal_access) {
+void GenerateContainer(Printer *out, const ServiceDescriptor *service, char flags) {
   GenerateDocCommentBody(out, service);
   out->Print("$access_level$ static partial class $containername$\n",
-             "access_level", GetAccessLevel(internal_access),
+             "access_level", GetAccessLevel(flags),
              "containername", GetServiceContainerClassName(service));
   out->Print("{\n");
   out->Indent();
@@ -465,17 +484,17 @@ void GenerateService(Printer* out, const ServiceDescriptor* service,
   out->Print("\n");
   GenerateServiceDescriptorProperty(out, service);
 
-  if (!generate_tester && !generate_reference) {
-    GenerateServerClass(out, service);
+  if (NeedContract(flags)) {
+    GenerateContractBaseClass(out, service);
     GenerateBindServiceMethod(out, service);
   }
 
-  if(generate_tester) {
+  if(NeedTester(flags)) {
     GenerateTesterClass(out, service);
   }
 
-  if(generate_reference){
-    GenerateReferenceClass(out, service, internal_access);
+  if(NeedReference(flags)){
+    GenerateReferenceClass(out, service, flags);
   }
   out->Outdent();
   out->Print("}\n");
@@ -483,8 +502,7 @@ void GenerateService(Printer* out, const ServiceDescriptor* service,
 
 }  // anonymous namespace
 
-grpc::string GetServices(const FileDescriptor* file, bool generate_tester,
-                         bool generate_reference, bool internal_access) {
+grpc::string GetServices(const FileDescriptor* file, char flags) {
   grpc::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
@@ -525,21 +543,23 @@ grpc::string GetServices(const FileDescriptor* file, bool generate_tester,
       out.Indent();
     }
 
-    if(!generate_reference){
+    if(NeedEvent(flags)){
       // Events are not needed for contract reference
       out.Print("\n");
       out.Print("#region Events\n");
       for(int i = 0; i < file->message_type_count(); i++){
         const Descriptor* message = file->message_type(i);
-        GenerateEvent(&out, message, internal_access);
+        GenerateEvent(&out, message, flags);
       }
       out.Print("#endregion\n");
     }
 
-    for (int i = 0; i < file->service_count(); i++) {
-      GenerateService(&out, file->service(i), generate_tester, generate_reference,
-                      internal_access);
+    if(NeedContainer(flags)){
+      for (int i = 0; i < file->service_count(); i++) {
+        GenerateContainer(&out, file->service(i), flags);
+      }
     }
+
     if (file_namespace != "") {
       out.Outdent();
       out.Print("}\n");
