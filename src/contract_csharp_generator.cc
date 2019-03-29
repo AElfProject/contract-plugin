@@ -483,8 +483,8 @@ void GenerateService(Printer* out, const ServiceDescriptor* service,
 
 }  // anonymous namespace
 
-grpc::string GetServices(const FileDescriptor* file, bool generate_client,
-                         bool generate_server, bool internal_access) {
+grpc::string GetServices(const FileDescriptor* file, bool generate_tester,
+                         bool generate_reference, bool internal_access) {
   grpc::string output;
   {
     // Scope the output stream so it closes and finalizes output to the string.
@@ -525,16 +525,19 @@ grpc::string GetServices(const FileDescriptor* file, bool generate_client,
       out.Indent();
     }
 
-    out.Print("\n");
-    out.Print("#region Events\n");
-    for(int i = 0; i < file->message_type_count(); i++){
-      const Descriptor* message = file->message_type(i);
-      GenerateEvent(&out, message, internal_access);
+    if(!generate_reference){
+      // Events are not needed for contract reference
+      out.Print("\n");
+      out.Print("#region Events\n");
+      for(int i = 0; i < file->message_type_count(); i++){
+        const Descriptor* message = file->message_type(i);
+        GenerateEvent(&out, message, internal_access);
+      }
+      out.Print("#endregion\n");
     }
-    out.Print("#endregion\n");
 
     for (int i = 0; i < file->service_count(); i++) {
-      GenerateService(&out, file->service(i), generate_client, generate_server,
+      GenerateService(&out, file->service(i), generate_tester, generate_reference,
                       internal_access);
     }
     if (file_namespace != "") {
