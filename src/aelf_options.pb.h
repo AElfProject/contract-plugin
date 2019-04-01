@@ -53,19 +53,23 @@ namespace aelf {
 
 // ===================================================================
 
-static const int kCsharpStateFieldNumber = 238149;
+static const int kBaseFieldNumber = 505001;
+extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::ServiceOptions,
+    ::google::protobuf::internal::RepeatedStringTypeTraits, 9, false >
+  base;
+static const int kCsharpStateFieldNumber = 505030;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::ServiceOptions,
     ::google::protobuf::internal::StringTypeTraits, 9, false >
   csharp_state;
-static const int kIsViewFieldNumber = 342891;
+static const int kIsViewFieldNumber = 506001;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MethodOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
   is_view;
-static const int kIsEventFieldNumber = 839427;
+static const int kIsEventFieldNumber = 50100;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::MessageOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
   is_event;
-static const int kIsIndexedFieldNumber = 543129;
+static const int kIsIndexedFieldNumber = 502001;
 extern ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::FieldOptions,
     ::google::protobuf::internal::PrimitiveTypeTraits< bool >, 8, false >
   is_indexed;

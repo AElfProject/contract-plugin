@@ -48,15 +48,17 @@ void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\022aelf_options.proto\022\004aelf\032 google/proto"
-      "buf/descriptor.proto:7\n\014csharp_state\022\037.g"
-      "oogle.protobuf.ServiceOptions\030\305\304\016 \001(\t:1\n"
-      "\007is_view\022\036.google.protobuf.MethodOptions"
-      "\030\353\366\024 \001(\010:3\n\010is_event\022\037.google.protobuf.M"
-      "essageOptions\030\203\2363 \001(\010:3\n\nis_indexed\022\035.go"
-      "ogle.protobuf.FieldOptions\030\231\223! \001(\010"
+      "buf/descriptor.proto:/\n\004base\022\037.google.pr"
+      "otobuf.ServiceOptions\030\251\351\036 \003(\t:7\n\014csharp_"
+      "state\022\037.google.protobuf.ServiceOptions\030\306"
+      "\351\036 \001(\t:1\n\007is_view\022\036.google.protobuf.Meth"
+      "odOptions\030\221\361\036 \001(\010:3\n\010is_event\022\037.google.p"
+      "rotobuf.MessageOptions\030\264\207\003 \001(\010:3\n\nis_ind"
+      "exed\022\035.google.protobuf.FieldOptions\030\361\321\036 "
+      "\001(\010"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 274);
+      descriptor, 323);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "aelf_options.proto", &protobuf_RegisterTypes);
   ::protobuf_google_2fprotobuf_2fdescriptor_2eproto::AddDescriptors();
@@ -74,6 +76,10 @@ struct StaticDescriptorInitializer {
 } static_descriptor_initializer;
 }  // namespace protobuf_aelf_5foptions_2eproto
 namespace aelf {
+const ::std::string base_default("");
+::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::ServiceOptions,
+    ::google::protobuf::internal::RepeatedStringTypeTraits, 9, false >
+  base(kBaseFieldNumber, base_default);
 const ::std::string csharp_state_default("");
 ::google::protobuf::internal::ExtensionIdentifier< ::google::protobuf::ServiceOptions,
     ::google::protobuf::internal::StringTypeTraits, 9, false >
