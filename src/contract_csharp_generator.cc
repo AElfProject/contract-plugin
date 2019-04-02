@@ -464,6 +464,7 @@ void GenerateBindServiceMethod(Printer* out, const ServiceDescriptor* service) {
   out->Print("return aelf::ServerServiceDefinition.CreateBuilder()");
   out->Indent();
   out->Indent();
+  out->Print("\n.AddDescriptors(Descriptors)");
   Methods methods = GetFullMethod(service);
   for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
     const MethodDescriptor* method = *itr;
