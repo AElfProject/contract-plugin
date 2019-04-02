@@ -20,6 +20,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <google/protobuf/stubs/logging.h>
 
 #include "contract_csharp_generator.h"
 #include "contract_csharp_generator_helpers.h"
@@ -45,6 +46,8 @@ using grpc_generator::MethodType;
 using grpc_generator::StringReplace;
 using std::map;
 using std::vector;
+using Services = std::vector<const ServiceDescriptor*>;
+using Methods = std::vector<const MethodDescriptor*>;
 
 namespace grpc_contract_csharp_generator {
 namespace {
@@ -83,8 +86,7 @@ bool GenerateDocCommentBodyImpl(grpc::protobuf::io::Printer* printer,
   // Note that we can't remove leading or trailing whitespace as *that's*
   // relevant in markdown too.
   // (We don't skip "just whitespace" lines, either.)
-  for (std::vector<grpc::string>::iterator it = lines.begin();
-       it != lines.end(); ++it) {
+  for (std::vector<grpc::string>::iterator it = lines.begin(); it != lines.end(); ++it) {
     grpc::string line = *it;
     if (line.empty()) {
       last_was_empty = true;
@@ -142,6 +144,92 @@ bool IsViewOnlyMethod(const MethodDescriptor* method) {
   return method->options().GetExtension(aelf::is_view);
 }
 
+
+int GetServiceBaseCount(const ServiceDescriptor* service){
+  return service->options().ExtensionSize(aelf::base);
+}
+
+std::string GetServiceBase(const ServiceDescriptor* service, int index){
+  return service->options().GetExtension(aelf::base, index);
+}
+
+void DepthFirstSearch(const ServiceDescriptor* service,
+                      std::vector<const ServiceDescriptor*>* list,
+                      std::set<const ServiceDescriptor*>* seen) {
+  if (!seen->insert(service).second) {
+    return;
+  }
+
+  const FileDescriptor* file = service->file();
+  // Add all dependencies.
+  for (int i = 0; i < file->dependency_count(); i++) {
+    if(file->dependency(i)->service_count() == 0){
+      continue;
+    }
+    if(file->dependency(i)->service_count() > 1){
+      GOOGLE_LOG(ERROR) << file->dependency(i)->name() << ": File contains more than one service.";
+    }
+    DepthFirstSearch(file->dependency(i)->service(0), list, seen);
+  }
+
+  // Add this file.
+  list->push_back(service);
+}
+
+void DepthFirstSearchForBase(const ServiceDescriptor* service,
+                             std::vector<std::string>* list,
+                             std::set<std::string>* seen,
+                             std::map<std::string, const ServiceDescriptor*> all_services
+) {
+  if (!seen->insert(service->file()->name()).second) {
+    return;
+  }
+
+  int baseCount = GetServiceBaseCount(service);
+//  const FileDescriptor* file = service->file();
+  // Add all dependencies.
+  for (int i = 0; i < baseCount; i++) {
+    std::string baseName = GetServiceBase(service, i);
+    if(!all_services.count(baseName)){
+      GOOGLE_LOG(ERROR) << "Can't find specified base " << baseName << ", did you forget to import it?";
+    }
+    const ServiceDescriptor* baseService = all_services[baseName];
+    DepthFirstSearchForBase(baseService, list, seen, all_services);
+  }
+
+  // Add this file.
+  list->push_back(service->file()->name());
+}
+
+Services GetFullService(const ServiceDescriptor* service){
+  Services all_depended_services;
+  std::set<const ServiceDescriptor*> seen;
+  DepthFirstSearch(service, &all_depended_services, &seen);
+  std::map<std::string, const ServiceDescriptor*> services;
+  for(Services::iterator itr = all_depended_services.begin(); itr != all_depended_services.end(); ++itr){
+    services[(*itr)->file()->name()]= *itr;
+  }
+  Services result;
+  std::vector<std::string> bases;
+  std::set<std::string> seenBases;
+  DepthFirstSearchForBase(service, &bases, &seenBases, services);
+  for(std::vector<std::string>::iterator itr = bases.begin(); itr != bases.end(); ++itr){
+    result.push_back(services[*itr]);
+  }
+  return result;
+}
+
+Methods GetFullMethod(const ServiceDescriptor* service){
+  Services services = GetFullService(service);
+  Methods methods;
+  for(Services::iterator itr = services.begin(); itr != services.end(); ++itr){
+    for(int i = 0; i < (*itr)->method_count(); i++){
+      methods.push_back((*itr)->method(i));
+    }
+  }
+  return methods;
+}
+
 std::string GetCSharpMethodType(const MethodDescriptor* method) {
   if(IsViewOnlyMethod(method)) {
     return "aelf::MethodType.View";
@@ -184,6 +272,10 @@ bool NeedContainer(char flags){
   return NeedContract(flags) | NeedTester(flags) | NeedReference(flags);
 }
 
+bool NeedOnlyEvent(char flags){
+  return NeedEvent(flags) & !NeedContract(flags) & !NeedReference(flags) & !NeedTester(flags);
+}
+
 std::string GetMethodRequestParamServer(const MethodDescriptor* method) {
   switch (GetMethodType(method)) {
     case METHODTYPE_NO_STREAMING:
@@ -222,8 +314,9 @@ std::vector<const Descriptor*> GetUsedMessages(
   std::set<const Descriptor*> descriptor_set;
   std::vector<const Descriptor*>
       result;  // vector is to maintain stable ordering
-  for (int i = 0; i < service->method_count(); i++) {
-    const MethodDescriptor* method = service->method(i);
+  Methods methods = GetFullMethod(service);
+  for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
+    const MethodDescriptor* method = *itr;
     if (descriptor_set.find(method->input_type()) == descriptor_set.end()) {
       descriptor_set.insert(method->input_type());
       result.push_back(method->input_type());
@@ -304,8 +397,9 @@ void GenerateContractBaseClass(Printer *out, const ServiceDescriptor *service) {
              "statetype", GetStateTypeName(service));
   out->Print("{\n");
   out->Indent();
-  for (int i = 0; i < service->method_count(); i++) {
-    const MethodDescriptor* method = service->method(i);
+  Methods methods = GetFullMethod(service);
+  for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
+    const MethodDescriptor* method = *itr;
     out->Print(
         "public virtual $returntype$ "
         "$methodname$($request$$response_stream_maybe$)\n",
@@ -336,8 +430,9 @@ void GenerateBindServiceMethod(Printer* out, const ServiceDescriptor* service) {
   out->Print("return aelf::ServerServiceDefinition.CreateBuilder()");
   out->Indent();
   out->Indent();
-  for (int i = 0; i < service->method_count(); i++) {
-    const MethodDescriptor* method = service->method(i);
+  Methods methods = GetFullMethod(service);
+  for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
+    const MethodDescriptor* method = *itr;
     out->Print("\n.AddMethod($methodfield$, serviceImpl.$methodname$)",
                "methodfield", GetMethodFieldName(method), "methodname",
                method->name());
@@ -357,8 +452,9 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
   out->Print("{\n");
   {
     out->Indent();
-    for (int i = 0; i < service->method_count(); i++) {
-      const MethodDescriptor* method = service->method(i);
+    Methods methods = GetFullMethod(service);
+    for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
+      const MethodDescriptor* method = *itr;
       out->Print(
           "public aelf::TestMethod<$request$, $response$> $fieldname$\n",
           "fieldname", method->name(),
@@ -388,8 +484,9 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
     out->Print("{\n");
     {
       out->Indent();
-      for (int i = 0; i < service->method_count(); i++) {
-        const MethodDescriptor* method = service->method(i);
+      Methods methods = GetFullMethod(service);
+      for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
+        const MethodDescriptor* method = *itr;
         out->Print("$access_level$ global::AElf.Sdk.CSharp.State.MethodReference<$request$, $response$> $fieldname$ { get; set; }\n",
                    "access_level", GetAccessLevel(flags),
                    "fieldname", method->name(),
@@ -401,6 +498,15 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
 
     out->Print("}\n");
   }
+
+bool HasEvent(const FileDescriptor* file){
+  for(int i = 0; i < file->message_type_count(); i++){
+    const Descriptor* message = file->message_type(i);
+    if(IsEventMessageType(message))
+      return true;
+  }
+  return false;
+}
 
 void GenerateEvent(Printer* out, const Descriptor* message, char flags){
   if(!IsEventMessageType(message)){
@@ -477,8 +583,9 @@ void GenerateContainer(Printer *out, const ServiceDescriptor *service, char flag
 
   GenerateMarshallerFields(out, service);
   out->Print("#region Methods\n");
-  for (int i = 0; i < service->method_count(); i++) {
-    GenerateStaticMethodField(out, service->method(i));
+  Methods methods = GetFullMethod(service);
+  for(Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
+    GenerateStaticMethodField(out, *itr);
   }
   out->Print("#endregion\n");
   out->Print("\n");
@@ -513,6 +620,16 @@ grpc::string GetServices(const FileDescriptor* file, char flags) {
     // Don't write out any output if there no services, to avoid empty service
     // files being generated for proto files that don't declare any.
     if (file->service_count() == 0) {
+      return output;
+    }
+
+    if(file->service_count() > 1){
+      GOOGLE_LOG(ERROR) << file->name() << ": File contains more than one service.";
+    }
+
+    // Don't write out any output if there no event for event-only generation
+    // scenario, this is usually for base contracts
+    if(NeedOnlyEvent(flags) && !HasEvent(file)) {
       return output;
     }
 
