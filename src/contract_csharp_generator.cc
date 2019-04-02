@@ -373,7 +373,6 @@ void GenerateServiceDescriptorProperty(Printer* out,
                                        const ServiceDescriptor* service) {
   std::ostringstream index;
   index << service->index();
-  out->Print("/// <summary>Service descriptor</summary>\n");
   out->Print(
       "public static global::Google.Protobuf.Reflection.ServiceDescriptor "
       "Descriptor\n");
@@ -382,7 +381,42 @@ void GenerateServiceDescriptorProperty(Printer* out,
              "umbrella", GetReflectionClassName(service->file()), "index",
              index.str());
   out->Print("}\n");
-  out->Print("\n");
+}
+
+void GenerateAllServiceDescriptorsProperty(Printer* out,
+                                           const ServiceDescriptor* service) {
+  out->Print(
+      "public static global::System.Collections.Generic.IReadOnlyList<global::Google.Protobuf.Reflection.ServiceDescriptor> Descriptors\n"
+  );
+  out->Print("{\n");
+  {
+    out->Indent();
+    out->Print("get\n");
+    out->Print("{\n");
+    {
+      out->Indent();
+      out->Print("return new global::System.Collections.Generic.List<global::Google.Protobuf.Reflection.ServiceDescriptor>()\n");
+      out->Print("{\n");
+      {
+        out->Indent();
+        Services services = GetFullService(service);
+        for(Services::iterator itr = services.begin(); itr != services.end(); ++itr){
+          const ServiceDescriptor* svc = *itr;
+          std::ostringstream index;
+          index << svc->index();
+          out->Print("$umbrella$.Descriptor.Services[$index$],\n",
+                     "umbrella", GetReflectionClassName(svc->file()), "index",
+                     index.str());
+        }
+        out->Outdent();
+      }
+      out->Print("};\n");
+      out->Outdent();
+    }
+    out->Print("}\n");
+    out->Outdent();
+  }
+  out->Print("}\n");
 }
 
 void GenerateContractBaseClass(Printer *out, const ServiceDescriptor *service) {
@@ -589,7 +623,13 @@ void GenerateContainer(Printer *out, const ServiceDescriptor *service, char flag
   }
   out->Print("#endregion\n");
   out->Print("\n");
+
+  out->Print("#region Descriptors\n");
   GenerateServiceDescriptorProperty(out, service);
+  out->Print("\n");
+  GenerateAllServiceDescriptorsProperty(out, service);
+  out->Print("#endregion\n");
+  out->Print("\n");
 
   if (NeedContract(flags)) {
     GenerateContractBaseClass(out, service);
