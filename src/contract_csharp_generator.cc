@@ -124,8 +124,8 @@ std::string GetServerClassName(const ServiceDescriptor* service) {
   return service->name() + "Base";
 }
 
-std::string GetTesterClassName(const ServiceDescriptor* service) {
-  return service->name()+"Tester";
+std::string GetStubClassName(const ServiceDescriptor *service) {
+  return service->name()+"Stub";
 }
 
 std::string GetReferenceClassName(const ServiceDescriptor* service) {
@@ -260,8 +260,8 @@ bool NeedContract(char flags) {
   return flags & GENERATE_CONTRACT;
 }
 
-bool NeedTester(char flags) {
-  return flags & GENERATE_TESTER;
+bool NeedStub(char flags) {
+  return flags & GENERATE_STUB;
 }
 
 bool NeedReference(char flags) {
@@ -269,11 +269,11 @@ bool NeedReference(char flags) {
 }
 
 bool NeedContainer(char flags){
-  return NeedContract(flags) | NeedTester(flags) | NeedReference(flags);
+  return NeedContract(flags) | NeedStub(flags) | NeedReference(flags);
 }
 
 bool NeedOnlyEvent(char flags){
-  return NeedEvent(flags) & !NeedContract(flags) & !NeedReference(flags) & !NeedTester(flags);
+  return NeedEvent(flags) & !NeedContract(flags) & !NeedReference(flags) & !NeedStub(flags);
 }
 
 std::string GetMethodRequestParamServer(const MethodDescriptor* method) {
@@ -481,9 +481,9 @@ void GenerateBindServiceMethod(Printer* out, const ServiceDescriptor* service) {
   out->Print("\n");
 }
 
-void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
-  out->Print("public class $testername$ : aelf::ContractTesterBase\n",
-             "testername", GetTesterClassName(service));
+void GenerateStubClass(Printer *out, const ServiceDescriptor *service) {
+  out->Print("public class $stubname$ : aelf::ContractStubBase\n",
+             "stubname", GetStubClassName(service));
   out->Print("{\n");
   {
     out->Indent();
@@ -491,7 +491,7 @@ void GenerateTesterClass(Printer* out, const ServiceDescriptor* service) {
     for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
       const MethodDescriptor* method = *itr;
       out->Print(
-          "public aelf::TestMethod<$request$, $response$> $fieldname$\n",
+          "public aelf::IMethodStub<$request$, $response$> $fieldname$\n",
           "fieldname", method->name(),
           "request", GetClassName(method->input_type()),
           "response", GetClassName(method->output_type()));
@@ -637,8 +637,8 @@ void GenerateContainer(Printer *out, const ServiceDescriptor *service, char flag
     GenerateBindServiceMethod(out, service);
   }
 
-  if(NeedTester(flags)) {
-    GenerateTesterClass(out, service);
+  if(NeedStub(flags)) {
+    GenerateStubClass(out, service);
   }
 
   if(NeedReference(flags)){

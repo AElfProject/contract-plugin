@@ -27,12 +27,12 @@
 namespace grpc_contract_csharp_generator {
 
   const unsigned char GENERATE_CONTRACT = 0x1; // hex for 0000 0001
-  const unsigned char GENERATE_TESTER = 0x2; // hex for 0000 0010
+  const unsigned char GENERATE_STUB = 0x2; // hex for 0000 0010
   const unsigned char GENERATE_REFERENCE = 0x4; // hex for 0000 0100
   const unsigned char GENERATE_EVENT = 0x8; // hex for 0000 1000
   const unsigned char INTERNAL_ACCESS = 0x80; // hex for 1000 0000
   const unsigned char GENERATE_CONTRACT_WITH_EVENT = GENERATE_CONTRACT | GENERATE_EVENT;
-  const unsigned char GENERATE_TESTER_WITH_EVENT = GENERATE_TESTER | GENERATE_EVENT;
+  const unsigned char GENERATE_STUB_WITH_EVENT = GENERATE_STUB | GENERATE_EVENT;
 
   // reference doesn't require event
 

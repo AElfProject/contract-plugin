@@ -40,8 +40,8 @@ public:
       char flags = grpc_contract_csharp_generator::GENERATE_CONTRACT_WITH_EVENT;
 
       for (size_t i = 0; i < options.size(); i++) {
-        if (options[i].first == "tester") {
-          flags |= grpc_contract_csharp_generator::GENERATE_TESTER_WITH_EVENT;
+        if (options[i].first == "stub") {
+          flags |= grpc_contract_csharp_generator::GENERATE_STUB_WITH_EVENT;
           flags &= ~grpc_contract_csharp_generator::GENERATE_CONTRACT;
         } else if (options[i].first == "reference") {
           // reference doesn't require event
