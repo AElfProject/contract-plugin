@@ -692,7 +692,7 @@ grpc::string GetServices(const FileDescriptor* file, char flags) {
 
     out.Print("#region Designer generated code\n");
     out.Print("\n");
-    out.Print("using aelf = global::AElf.Types.CSharp;\n");
+    out.Print("using aelf = global::AElf.CSharp.Core;\n");
     out.Print("\n");
 
     grpc::string file_namespace = GetFileNamespace(file);
