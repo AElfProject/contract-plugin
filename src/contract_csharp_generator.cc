@@ -559,23 +559,28 @@ void GenerateEvent(Printer* out, const Descriptor* message, char flags){
     out->Print("{\n");
     {
       out->Indent();
+        out->Print("return new List<$classname$>\n", "classname", message->name());
+        out->Print("{\n");
       for(int i = 0; i < message->field_count(); i++){
         const FieldDescriptor* field = message->field(i);
-        if(IsIndexedField(field)){
-          out->Print("yield return new $classname$\n", "classname", message->name());
+
+          if(IsIndexedField(field)){
+          out->Print("new $classname$\n", "classname", message->name());
           out->Print("{\n");
           {
             out->Indent();
             out->Print("$propertyname$ = $propertyname$\n", "propertyname", GetPropertyName(field));
             out->Outdent();
           }
-          out->Print("};\n");
+          out->Print("},\n");
         }
       }
-      out->Print("yield break;\n");
+        out->Print("};\n");
+
+//      out->Print("yield break;\n");
       out->Outdent();
     }
-    out->Print("}\n\n");
+    out->Print("}\n\n"); // end GetIndexed
 
     // GetNonIndexed
     out->Print("public $classname$ GetNonIndexed()\n", "classname", message->name());
@@ -692,6 +697,7 @@ grpc::string GetServices(const FileDescriptor* file, char flags) {
 
     out.Print("#region Designer generated code\n");
     out.Print("\n");
+    out.Print("using System.Collections.Generic;\n");
     out.Print("using aelf = global::AElf.CSharp.Core;\n");
     out.Print("\n");
 
