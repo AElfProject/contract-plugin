@@ -435,18 +435,12 @@ void GenerateContractBaseClass(Printer *out, const ServiceDescriptor *service) {
   for (Methods::iterator itr = methods.begin(); itr != methods.end(); ++itr) {
     const MethodDescriptor* method = *itr;
     out->Print(
-        "public virtual $returntype$ "
-        "$methodname$($request$$response_stream_maybe$)\n",
+        "public abstract $returntype$ "
+        "$methodname$($request$$response_stream_maybe$);\n",
         "methodname", method->name(),
         "returntype", GetMethodReturnTypeServer(method),
         "request", GetMethodRequestParamServer(method),
         "response_stream_maybe", GetMethodResponseStreamMaybe(method));
-    out->Print("{\n");
-    out->Indent();
-    out->Print(
-        "throw new global::System.NotImplementedException();\n");
-    out->Outdent();
-    out->Print("}\n\n");
   }
   out->Outdent();
   out->Print("}\n");
