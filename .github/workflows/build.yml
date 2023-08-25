@@ -6,18 +6,44 @@ on:
     branches: [ master, 14783538_improve_cs_generator]
 jobs:
   build:
-    name: Build image
+    name: Build images for multiple platforms
     runs-on: ubuntu-latest
+    # defaults:
+    #   run:
+    #     working-directory: scripts
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - darwin/arm64
+          - linux/arm64
+        include:
+          - platform: linux/amd64
+            name: linux_amd64
+          - platform: darwin/arm64
+            name: darwin_arm64
+          - platform: linux/arm64
+            name: linux_arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: linux/amd64, linux/arm64, darwin/amd64
+          platforms: ${{ matrix.platform }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: Build & Push Image
+      - name: BuildX ${{ matrix.platform }} Image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64,darwin/amd64 --tag aelf.io/aeshanw/multi-arch-gha:latest .
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          docker buildx build --build-arg BUILDPLATFORM=${{ matrix.platform }} --platform ${{ matrix.platform }} --load -t aelf.io/aeshanw/${{ matrix.platform }}-gha:latest .
+      - name: Run Multi-arch image & extract binaries
+        run: |
+          mkdir build
+          CID=$(docker run -d --platform ${{ matrix.platform }} aelf.io/aeshanw/${{ matrix.platform }}-gha true)
+          docker cp $CID:/usr/app/opt/bin/contract_csharp_plugin ./build/contract_csharp_plugin
+      - uses: actions/upload-artifact@v3
+        with:
+          name: contract_csharp_plugin_${{ matrix.name }}
+          path: build/contract_csharp_plugin
