@@ -1,11 +1,9 @@
 name: Build Multi-arch Image
-
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master, 14783538_improve_cs_generator]
-
 jobs:
   build:
     name: Build image
