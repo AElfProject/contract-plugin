@@ -16,10 +16,8 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: linux/amd64, linux/arm64, darwin/amd64
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
       - name: Build & Push Image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 --tag aelf.io/aeshanw/multi-arch-gha:latest .
+          docker buildx build --platform linux/amd64,linux/arm64,darwin/amd64 --tag aelf.io/aeshanw/multi-arch-gha:latest .
