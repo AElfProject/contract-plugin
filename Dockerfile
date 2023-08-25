@@ -12,6 +12,6 @@ RUN cmake .
 ARG TARGETPLATFORM
 RUN make
 ## Runtime
-FROM alpine
+FROM alpine:latest
 # RUN <install runtime dependencies installed via emulation>
 COPY --from=build build/opt/bin /bin
