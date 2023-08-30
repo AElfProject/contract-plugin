@@ -1,46 +1,107 @@
-name: Build Multi-arch Image
+name: Cross-Compile CMake Project
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   pull_request:
-    branches: [ master ]
+    branches: [ master, github_actions_ci ]
 jobs:
   build:
-    name: Build images for multiple platforms
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          # - darwin/arm64
-          - linux/arm64
-        include:
-          - platform: linux/amd64
-            name: linux_amd64
-          # - platform: darwin/arm64
-          #   name: darwin_arm64
-          - platform: linux/arm64
-            name: linux_arm64
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: ${{ matrix.platform }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: BuildX ${{ matrix.platform }} Image
+      - name: Checkout submodules
         run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          docker buildx build --build-arg BUILDPLATFORM=${{ matrix.platform }} --platform ${{ matrix.platform }} --load -t aelf.io/aeshanw/${{ matrix.platform }}-gha:latest .
-      - name: Run Multi-arch image & extract binaries
+          git submodule init
+          git submodule update
+      - name: Install Dependencies
         run: |
-          mkdir build
-          CID=$(docker run -d --platform ${{ matrix.platform }} aelf.io/aeshanw/${{ matrix.platform }}-gha true)
-          docker cp $CID:/usr/app/opt/bin/contract_csharp_plugin ./build/contract_csharp_plugin
+          sudo apt-get update
+          sudo apt-get install -y \
+            g++-aarch64-linux-gnu \
+            cmake \
+            git \
+            build-essential \
+            libgrpc-dev \
+            libgmp-dev libmpfr-dev libmpc-dev
+      - name: Install/Compile protobuf arm64 from source
+        run: |
+          git clone https://github.com/protocolbuffers/protobuf.git
+          cd protobuf
+          git submodule update --init --recursive
+      - name: Download the toolchain aar
+        run: |
+          wget -O gcc-11.2.0.tar.xz "https://ftp.gnu.org/gnu/gcc/gcc-11.2.0/gcc-11.2.0.tar.xz"
+        id: download
+      - name: Extract toolchain aar
+        run: |
+          tar xf gcc-11.2.0.tar.xz
+          cd gcc-11.2.0
+          ./configure --target=aarch64-linux-gnu --prefix=/usr/local
+          make -j4
+          sudo make install
+        if: steps.download.outcome == 'success'
+      # - name: Set toolchain environment variables
+      #   run: |
+      #     export CROSS_COMPILE=$PWD/gcc-arm-10.3-2021.07-aarch64-aarch64-none-elf/bin/aarch64-none-elf-
+      #     export PATH=$PATH:$PWD/gcc-arm-10.3-2021.07-aarch64-aarch64-none-elf/bin
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+      - name: Configure CMake
+        run: cmake -H. -DCMAKE_TOOLCHAIN_FILE=toolchain-aarch64-linux-gnu.cmake -G "Unix Makefiles" -DPROTOBUF_PROTOC_LIBRARY=/usr/lib/cmake/protobuf -DgRPC_PROTOBUF_PROVIDER=package -DCMAKE_INCLUDE_PATH=/usr/include .
+      - name: List files in folder
+        run: ls -al
+      - name: Build cmake Project
+        run: make
       - uses: actions/upload-artifact@v3
         with:
-          name: contract_csharp_plugin_${{ matrix.name }}
-          path: build/contract_csharp_plugin
+          name: contract_csharp_plugin_arm64
+          path: opt/bin/contract_csharp_plugin
+
+# name: Build Multi-arch Image
+# on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
+# jobs:
+#   build:
+#     name: Build images for multiple platforms
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         platform:
+#           - linux/amd64
+#           # - darwin/arm64
+#           - linux/arm64
+#         include:
+#           - platform: linux/amd64
+#             name: linux_amd64
+#           # - platform: darwin/arm64
+#           #   name: darwin_arm64
+#           - platform: linux/arm64
+#             name: linux_arm64
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Set up QEMU
+#         uses: docker/setup-qemu-action@v2
+#         with:
+#           platforms: ${{ matrix.platform }}
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
+#       - name: BuildX ${{ matrix.platform }} Image
+#         run: |
+#           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+#           docker buildx build --build-arg BUILDPLATFORM=${{ matrix.platform }} --platform ${{ matrix.platform }} --load -t aelf.io/aeshanw/${{ matrix.platform }}-gha:latest .
+#       - name: Run Multi-arch image & extract binaries
+#         run: |
+#           mkdir build
+#           CID=$(docker run -d --platform ${{ matrix.platform }} aelf.io/aeshanw/${{ matrix.platform }}-gha true)
+#           docker cp $CID:/usr/app/opt/bin/contract_csharp_plugin ./build/contract_csharp_plugin
+#       - uses: actions/upload-artifact@v3
+#         with:
+#           name: contract_csharp_plugin_${{ matrix.name }}
+#           path: build/contract_csharp_plugin

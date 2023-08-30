@@ -1,10 +1,20 @@
 cmake_minimum_required(VERSION 2.8)
+if(NOT CMAKE_TOOLCHAIN_FILE STREQUAL "")
+    include(${CMAKE_TOOLCHAIN_FILE})
+endif()
 
 set(PACKAGE_NAME      "grpc")
 set(PACKAGE_VERSION   "0.1.0")
 set(PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
-project(${PACKAGE_NAME} C CXX)
+
+if(NOT CMAKE_TOOLCHAIN_FILE STREQUAL "")
+    project(${PACKAGE_NAME} CXX)
+    cmake_policy(SET CMP0074 NEW)
+    find_package(Protobuf REQUIRED)
+else()
+    project(${PACKAGE_NAME} C CXX)
+endif()
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/opt/bin)
 
