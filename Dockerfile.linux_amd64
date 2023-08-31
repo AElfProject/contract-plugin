@@ -1,0 +1,13 @@
+FROM amd64/ubuntu
+RUN apt-get update && \
+    apt-get install -y protobuf-compiler git cmake gcc g++
+WORKDIR /workdir
+COPY . /workdir
+RUN git submodule init
+RUN git submodule update
+RUN pwd && ls -al
+ENV CXX /usr/bin/g++
+ENV CC /usr/bin/gcc
+RUN cmake .
+# # ## Final C++ compilation stage
+RUN make
