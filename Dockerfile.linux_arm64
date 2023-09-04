@@ -1,0 +1,13 @@
+FROM arm64v8/ubuntu
+RUN apt-get update && \
+    apt-get install -y protobuf-compiler git cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+WORKDIR /workdir
+COPY . /workdir
+RUN git submodule init
+RUN git submodule update
+RUN pwd && ls -al
+ENV CXX /usr/bin/aarch64-linux-gnu-g++
+ENV CC /usr/bin/aarch64-linux-gnu-gcc
+RUN cmake .
+# # ## Final C++ compilation stage
+RUN make
