@@ -38,3 +38,21 @@ docker run --name arm_compiler_container -d -t linux_arm64_basic_compiler
 ```
 docker cp arm_compiler_container:/workdir/opt/bin/contract_csharp_plugin .
 ```
+### Linux/amd64 (x86)
+
+Likewise for x86 binaries you can use a similar docker method but with the amd64 dockerfile.
+
+#### Build docker-image
+```
+docker build -t linux_x86_basic_compiler --file Dockerfile.linux_amd64 .
+```
+
+#### Run docker-container
+```
+docker run --name x86_compiler_container -d -t linux_amd64_basic_compiler
+```
+
+#### Copy binary from container's /opt/bin folder
+```
+docker cp x86_compiler_container:/workdir/opt/bin/contract_csharp_plugin .
+```
