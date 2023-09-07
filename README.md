@@ -39,7 +39,7 @@ docker build -t linux_arm64_basic_compiler --file docker/linux/arm64/Dockerfile 
 #### Run docker-container with mounted-volume
 ```
 rm CMakeCache.txt //to clean the build-cache from prior processes
-docker run --name arm_compiler_container -v .:/home -it linux_arm64_basic_compiler /bin/sh -c "cmake -DOS_ARCH_TARGET=linux_arm64 . && make && cd bin/linux_arm64 && zip contract_csharp_plugin_linux_arm64 contract_csharp_plugin"
+docker run --name arm_compiler_container -v .:/home -it linux_arm64_basic_compiler /bin/sh -c "cmake -DOS_ARCH_TARGET=linux_arm64 . && make && cd bin/linux_arm64 && zip contract_csharp_plugin_linux_arm64.zip contract_csharp_plugin"
 ```
 
 #### Locate the binary
@@ -60,7 +60,7 @@ docker build -t linux_x86_basic_compiler --file docker/linux/amd64/Dockerfile .
 #### Run docker-container
 ```
 rm CMakeCache.txt //to clean the build-cache from prior processes
-docker run --name x86_compiler_container -v .:/home -it linux_x86_basic_compiler /bin/sh -c "cmake -DOS_ARCH_TARGET=linux_amd64 . && make && cd bin/linux_amd64 && zip contract_csharp_plugin_linux_amd64 contract_csharp_plugin"
+docker run --name x86_compiler_container -v .:/home -it linux_x86_basic_compiler /bin/sh -c "cmake -DOS_ARCH_TARGET=linux_amd64 . && make && cd bin/linux_amd64 && zip contract_csharp_plugin_linux_amd64.zip contract_csharp_plugin"
 ```
 
 #### Locate the zipped binary
