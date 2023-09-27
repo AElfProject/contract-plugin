@@ -69,3 +69,9 @@ cd bin/linux_amd64
 file contract_csharp_plugin //to confirm the binary ARCH is X86
 file contract_csharp_plugin_linux_amd64.zip //this is the Zipped binary
 ```
+
+### Known Issues with docker run & relative path
+Note: if you encounter an issue on the releative path volume-mounts.
+> docker: Error response from daemon: create .: volume name is too short, names should be at least two alphanumeric characters.
+
+You'll have to replace `-v .:/home` with `-v /absolute/path/to/contract-plugin:/home` when executing `docker run`.
