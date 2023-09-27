@@ -2,6 +2,7 @@
 .build/
 build/
 bins
+bin/
 gens
 libs
 objs

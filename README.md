@@ -14,3 +14,64 @@ git submodule update
 cmake .
 make
 ```
+Protoc plugins for code generation of contracts defined in grpc format.
+
+## Local Builds
+
+This build process is to generate a contract_plugin binary for non-HOST machines (e.g Host=OSX Target=Linux).
+
+### Prepare local source files
+Before mounting & running the docker-image we need to ensure all local-files are ready for compilation.
+```
+git submodule init
+git submodule update
+```
+
+### Linux/arm64
+
+This can be compiled/generated using docker locally (was tested on a OSX M2 Macbook i.e ARM chipset) by following the below steps:
+
+#### Build docker-image
+```
+docker build -t linux_arm64_basic_compiler --file docker/linux/arm64/Dockerfile .
+```
+
+#### Run docker-container with mounted-volume
+```
+rm CMakeCache.txt //to clean the build-cache from prior processes
+docker run --name arm_compiler_container -v .:/home -it linux_arm64_basic_compiler /bin/sh -c "cmake -DOS_ARCH_TARGET=linux_arm64 . && make && cd bin/linux_arm64 && zip contract_csharp_plugin_linux_arm64.zip contract_csharp_plugin"
+```
+
+#### Locate the binary
+```
+cd bin/linux_arm64
+file contract_csharp_plugin //to confirm the binary ARCH is ARM
+file contract_csharp_plugin_linux_arm64.zip //this is the Zipped binary
+```
+### Linux/amd64 (x86)
+
+Likewise for x86 binaries you can use a similar docker method but with the amd64 dockerfile.
+
+#### Build docker-image
+```
+docker build -t linux_x86_basic_compiler --file docker/linux/amd64/Dockerfile .
+```
+
+#### Run docker-container
+```
+rm CMakeCache.txt //to clean the build-cache from prior processes
+docker run --name x86_compiler_container -v .:/home -it linux_x86_basic_compiler /bin/sh -c "cmake -DOS_ARCH_TARGET=linux_amd64 . && make && cd bin/linux_amd64 && zip contract_csharp_plugin_linux_amd64.zip contract_csharp_plugin"
+```
+
+#### Locate the zipped binary
+```
+cd bin/linux_amd64
+file contract_csharp_plugin //to confirm the binary ARCH is X86
+file contract_csharp_plugin_linux_amd64.zip //this is the Zipped binary
+```
+
+### Known Issues with docker run & relative path
+Note: if you encounter an issue on the releative path volume-mounts.
+> docker: Error response from daemon: create .: volume name is too short, names should be at least two alphanumeric characters.
+
+You'll have to replace `-v .:/home` with `-v /absolute/path/to/contract-plugin:/home` when executing `docker run`.

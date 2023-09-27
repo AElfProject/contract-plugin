@@ -6,7 +6,7 @@ set(PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
 project(${PACKAGE_NAME} C CXX)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/opt/bin)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/${OS_ARCH_TARGET})
 
 # Providers for third-party dependencies (gRPC_*_PROVIDER properties):
 # "module": build the dependency using sources from git submodule (under third_party)
